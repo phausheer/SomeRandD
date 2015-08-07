@@ -1237,7 +1237,7 @@ createLoadFiles   <- function() {
 testVectorMatrixDataFrame    <- function() {
   vNumbers <- c(1:5)
   print(class(vNumbers))
-  vChar <- c("alpha", "beta","charlie", 4, "epsilon")
+  vChar <- c("alpha", "beta","charlie", "delta", "epsilon")
   print(class(vChar))
   mtxDim <- matrix(c(vNumbers,vChar), nrow=5, ncol=2)
   print(mtxDim)
