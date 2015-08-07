@@ -1230,4 +1230,57 @@ createLoadFiles   <- function() {
     write(createnClusterLoadSQLFileContent(strFullTableName, vFileList[f]), strCreatenClusterLoadFullFileName) 
   }
 }
+############################################################################
+### testVectorMatrixDataFrame()
+### cbind example
+############################################################################
+testVectorMatrixDataFrame    <- function() {
+  vNumbers <- c(1:5)
+  print(class(vNumbers))
+  vChar <- c("alpha", "beta","charlie", 4, "epsilon")
+  print(class(vChar))
+  mtxDim <- matrix(c(vNumbers,vChar), nrow=5, ncol=2)
+  print(mtxDim)
   
+  # mtxVec <- matrix(nrow=5, ncol=2)
+  mtxVec <- cbind(vNumbers,vChar)
+  print(mtxVec)
+  
+  vColClasses <- c("numeric", "character")
+  vColNames <- c("nums", "chars")
+  
+  # dfMixed <- as.data.frame(mtxVec, stringsAsFactors=FALSE, colClasses = vColClasses)
+  #   print(str(dfMixed))
+  #   lapply(dfMixed, class)
+  
+  # dfClasses <- data.frame(nrow=5, ncol=2, stringsAsFactors=FALSE, colClasses = vColClasses)
+  # dfClasses <- data.frame(nrow=5, ncol=2, colClasses = vColClasses)
+  dfClasses <- as.data.frame(matrix(0, ncol = 2, nrow = 5), colClasses = vColClasses)
+  print(str(dfClasses))
+  #    print(dfClasses)
+  # dfClasses <- cbind(1:5,vChar)
+  dfClasses[,1] <-vNumbers
+  dfClasses[,2] <- vChar
+  
+  #    dfClasses[1,1] <- 1
+  #    dfClasses[2,1] <- 2
+  #    dfClasses[3,1] <- 3
+  #    dfClasses[4,1] <- 4
+  #    dfClasses[5,1] <- 5
+  
+  #    dfClasses[1,2] <- "alphaa"
+  #    dfClasses[2,2] <- "alphab"
+  #    dfClasses[3,2] <- "alphac"
+  #    dfClasses[4,2] <- "alphad"
+  #    dfClasses[5,2] <- "alphae"
+  #   dfClasses <- data.frame(vNumbers, vChar )
+  #   print("before")
+  #   print(dfClasses)
+  #   dfClasses <- cbind(vNumbers,vChar)
+  colnames(dfClasses) <- tolower(vColNames)
+  #   print("after")
+  print(str(dfClasses))
+  print(dfClasses)
+  lapply(dfClasses, class)
+  
+}
