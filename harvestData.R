@@ -1,7 +1,7 @@
 ########################################################################################################################################################
 ### C:\Users\p622403\Documents\Work\R\BBB
 ### harvestMapAddresses.R
-### July 2015 
+### August 14 2015 
 ########################################################################################################################################################
 ############################################################################
 ### http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/
@@ -16,12 +16,17 @@ getHarvestPackages <- function() {
   library(rvest)
   if (!require(leaflet)) install.packages('leaflet')
   library(leaflet)
-  library(ggmap)
+  # library(ggmap)
   library(RColorBrewer)
+  if (!require(dplyr)) install.packages('dplyr')
   library(dplyr)
+  if (!require(stringr)) install.packages('stringr')
   library(stringr)
+  if (!require(RCurl)) install.packages('RCurl')
   library(RCurl)
- }
+  if (!require(XLConnect)) install.packages('XLConnect')
+  library(XLConnect)
+}
 ############################################################################
 ### saveEntireWebsiteToLocalFile
 ############################################################################
@@ -32,14 +37,17 @@ saveEntireWebsiteToLocalFile <- function(strURL) {
   # strURL <- "http://www.bbb.org/tulsa/business-reviews/construction-and-remodeling-services/3-d-construction-in-coweta-ok-38016087"
   # strURL <- "http://www.bbb.org/boston/business-reviews/roofing-contractors/a-roofing-llc-in-williston-vt-121527"
   # strURL <- "http://www.bbb.org/boston/business-reviews/painting-contractors/lifetyme-exteriors-llc-in-needham-hgts-ma-95426"
-  # strURL <- "http://www.bbb.org/boston/business-reviews/insurance-companies/brooklawn-insurance-agency-inc-in-new-bedford-ma-62884/customer-reviews/"
-  strURL <- "http://www.bbb.org/nebraska/business-reviews/fire-and-water-damage-restoration/paul-davis-restoration-in-columbus-ne-300033282"
+  ### No Customer Review Table :   strURL <- "http://www.bbb.org/boston/business-reviews/insurance-companies/brooklawn-insurance-agency-inc-in-new-bedford-ma-62884/customer-reviews/"
+  ### List of URLs with some sponsored
+  strURL <- "http://www.bbb.org/boston/accredited-business-directory/find/asphalt?s=asphalt&cbbb=1"
+  # strURL <- "http://www.bbb.org/nebraska/business-reviews/fire-and-water-damage-restoration/paul-davis-restoration-in-columbus-ne-300033282"
   
   webpage <- getURL(strURL)
   # print(webpage)
   # Process escape characters
   webpage <- readLines(tc <- textConnection(webpage)); close(tc)
-  saveToALocalFile(webpage)
+  # blnLapTop <- TRUE
+  saveToALocalFile(webpage, blnTimeStampI=TRUE, blnAtWork=TRUE, strBaseFileNa="ListWithSponsored")
 }
 ############################################################################
 ### parseThisWebsite
@@ -59,21 +67,7 @@ parseTheEntireWebsite <- function() {
   print(class(url))
   return(url)
 }
-############################################################################
-### saveToALocalFile
-############################################################################
-saveToALocalFile <- function(strContent) {
-  strLogFileNa <- "C:/Users/p622403/Documents/Work/R/BBB/Webpage_"
-  # strLogFileNa <- "C:/Users/Hausheer/Documents/Work/R/BBB/Webpage_"
-  strLogFileNa <- paste(strLogFileNa,gsub(":","",Sys.time()),sep='')
-  strLogFileNa <- gsub("-","_",strLogFileNa)
-  strLogFileNa <- gsub(" ","_",strLogFileNa)
-  strLogFileNa <- paste(strLogFileNa, ".htm", sep="")
-  print(strLogFileNa)
-  fileConn<-file(strLogFileNa)
-  writeLines(strContent, fileConn)
-  close(fileConn)
-}
+
 ############################################################################
 ### extractListOfURLs
 ### http://stackoverflow.com/questions/27297484/r-using-rvest-package-instead-of-xml-package-to-get-links-from-url
@@ -81,65 +75,71 @@ saveToALocalFile <- function(strContent) {
 extractListOfURLs  <- function(url) {
   selector_name<-".track-click"
   fnames <- url %>% html_nodes("a") %>% html_attr("href")
-#   fnames <- html_nodes(url, selector_name) %>% html_nodes("a") %>%
-#       html_text()
+  #   fnames <- html_nodes(url, selector_name) %>% html_nodes("a") %>%
+  #       html_text()
   
   vURLClean3 <- gsub("\r\n", "", fnames, fixed = TRUE)
   # vURLClean <-  gsub(" ", "", vURLClean3, fixed = TRUE)
   vURLClean <- vURLClean3
   
-#   print("*** vURLClean *** ")
-#   print(class(vURLClean))
+  #   print("*** vURLClean *** ")
+  #   print(class(vURLClean))
   # print(vURLClean)
   return(vURLClean)
-}
-############################################################################
-### extractTheNames
-############################################################################
-extractTheNames  <- function(url) {
-  ### These 2 lines are for DEBUG, stand alone processing
-  strSingleURL <- "http://www.bbb.org/boston/business-reviews/painting-contractors/lifetyme-exteriors-llc-in-needham-hgts-ma-95426"
-  url  <- parseThisWebsite(strSingleURL)
-  print("*** url done *** ")
-  
-  
-  # Pull out the names of the wineries and breweries
-  # selector_name<-".pageListingHeader"
-  selector_complaint_label <- ".complaint-table .even,.odd td:first-child"
-  selector_complaint_table <- ".complaint-table .even,.odd td"
-#   fnames <- html_nodes(url, selector_name) %>%
-#     html_text()
-  vComplaintLabels <- html_nodes(url, selector_complaint_table) %>%
-    html_text()
-  print("*** vComplaintLabels *** ")
-  print(class(vComplaintLabels))
-  print(length(vComplaintLabels))
-  print(vComplaintLabels)
-  return(vComplaintLabels)
 }
 ############################################################################
 ### extractTDFromFirst2Tables
 ############################################################################
 extractTDFromFirst2Tables  <- function(url) {
   ### These 2 lines are for DEBUG, stand alone processing
-#     strSingleURL <- "http://www.bbb.org/greater-maryland/business-reviews/fire-and-water-damage-restoration/water-mold-and-fire-baltimore-in-baltimore-md-90261344"
-#     # Easy One : strSingleURL <- "http://www.bbb.org/dallas/business-reviews/fire-and-water-damage-restoration/puroclean-restoration-specialists-in-frisco-tx-90247270"
-#     url  <- parseThisWebsite(strSingleURL)
-#     print("*** url done *** ")
+  # strSingleURL <- "http://www.bbb.org/greater-maryland/business-reviews/fire-and-water-damage-restoration/water-mold-and-fire-baltimore-in-baltimore-md-90261344"
+  ### 10 rows, 2 positive reviews :
+  # strSingleURL <- "http://www.bbb.org/boston/business-reviews/roofing-contractors/a-roofing-llc-in-williston-vt-121527"
+  ### Easy One : strSingleURL <- "http://www.bbb.org/dallas/business-reviews/fire-and-water-damage-restoration/puroclean-restoration-specialists-in-frisco-tx-90247270"
+  ### No Customer Review Table :   strSingleURL <- "http://www.bbb.org/boston/business-reviews/insurance-companies/brooklawn-insurance-agency-inc-in-new-bedford-ma-62884/customer-reviews/"
+  #   url  <- parseThisWebsite(strSingleURL)
+  #   print("*** url done *** ")
+  # print(html_text(url))
   
   selector_complaint_table <- ".complaint-table td"
   # selector_complaint_table <- ".complaint-table .even,.odd td"
   #   fnames <- html_nodes(url, selector_name) %>%
   #     html_text()
   vTDs <- html_nodes(url, selector_complaint_table) %>%  html_text()
-#   print("*** vTDs ***")
-#   print(length(vTDs))
+  #   print("*** vTDs ***")
+  #   print(length(vTDs))
+  #   print(class(vTDs))
+  #   print(vTDs)
+  
   if (length(vTDs)>0) {
     df2 <- cleanExtractedHTMLText(vTDs)
   }
   else {
-    ### Write to the XMLLogFile this error condition
-    df2 <- data.frame(Labels = character(0), stringsAsFactors = FALSE)
+    ### ten zero, data frame
+    dfZeroes <- data.frame(matrix("0", nrow = 1, ncol = 10), stringsAsFactors=FALSE)
+    selector_ATH <- ".active-table-header a"
+    vReviews <- html_nodes(url, selector_ATH) %>%  html_text()
+    #     print("*** vReviews ***")
+    #     print(vReviews)
+    selector_NoLink <- ".nolink"
+    vReviewsNoLink <- html_nodes(url, selector_NoLink) %>%  html_text()
+    #     print("*** vReviewsNoLink ***")
+    #     print(vReviewsNoLink)
+    vReviewsNoLinkNumber <- gsub("[^0-9]", "", c(vReviews, vReviewsNoLink))
+    #     print("*** vReviewsNoLinkNumber ***")
+    #     print(vReviewsNoLinkNumber)
+    if (length(vReviewsNoLinkNumber)==3) {
+      dfZeroes[8] <- vReviewsNoLinkNumber[1]
+      dfZeroes[9] <- vReviewsNoLinkNumber[2]
+      dfZeroes[10] <- vReviewsNoLinkNumber[3]
+      df2 <- dfZeroes
+      #       print("*** df2 ***")
+      #       print(df2)
+    }
+    else {
+      ### Return 0 length data frame, this causes useListExtractDetails to log an Error in  the XMLLogFile
+      df2 <- data.frame(Labels = character(0), stringsAsFactors = FALSE)
+    }
   }
   return(df2)
 }
@@ -150,12 +150,12 @@ cleanExtractedHTMLText  <- function(vTDs) {
   # vTDs <- url %>% html_nodes(".complaint-table") %>% html_nodes("td") %>% html_text()
   # print("*** gsub ***")
   vTDClean3 <- gsub("\r\n", "", vTDs, fixed = TRUE)
-#     print("*** vTDClean3 ***")
-#     print(length(vTDClean3))
+  #     print("*** vTDClean3 ***")
+  #     print(length(vTDClean3))
   # vTDClean <-  gsub(" ", "", vTDClean3, fixed = TRUE)
-  vTDClean <-  str_trim(vTDClean)
-#       print("*** vTDClean ***")
-#       print(length(vTDClean))
+  vTDClean <-  str_trim(vTDClean3)
+  #       print("*** vTDClean ***")
+  #       print(length(vTDClean))
   #   for (i in 1:length(vTDClean)){
   #     cat("\n",i, ")",vTDClean[i])
   #   }
@@ -178,9 +178,9 @@ cleanExtractedHTMLText  <- function(vTDs) {
   colClasses = c("character", "character")
   vColNames  = c("Labels", "Vals")
   df4 <- data.frame(Labels = character(length(vLabels)), stringsAsFactors = FALSE)
-#   print("*** df4 *** ")
-#   print(nrow(df4))
-#   print(length(vLabels))
+  #   print("*** df4 *** ")
+  #   print(nrow(df4))
+  #   print(length(vLabels))
   if (length(vLabels)>0) {
     for(i in 1:length(vLabels)){
       df4$Labels[i] <- vLabels[i]
@@ -191,8 +191,8 @@ cleanExtractedHTMLText  <- function(vTDs) {
   } else {
     df2 <- df4
   }
-#   print("*** df2 *** ")
-#   print(nrow(df2))
+  #   print("*** df2 *** ")
+  #   print(nrow(df2))
   return(df2)
 }
 replaceNullWithZero <- function(x) {
@@ -206,29 +206,7 @@ replaceNullWithZero <- function(x) {
   }
   return(strValue)
 }
-  
-############################################################################
-### extractStreetAddresses
-############################################################################
-extractStreetAddresses  <- function(url) {
-#   vStreet <- url %>%  html_nodes(xpath="//meta[@itemprop='streetAddress']") %>%
-#     html_attr("content")
-  
-  streetNode <- url %>%  html_nodes(xpath="//meta[@itemprop='streetAddress']") 
-  print("*** streetNode *** ")
-  print(class(streetNode))
-  
-  streetAddr <-   html_attr(streetNode, "content")
-#   print("*** streetAddr *** ")
-#   print(class(streetAddr))
-#   print(length(streetAddr))
-#   print(streetAddr)
-#   print("*** vStreet *** ")
-#   print(class(vStreet))
-#   print(vStreet)
-  
-  return(streetAddr)
-}
+
 ############################################################################
 ### extractBBBRating
 ############################################################################
@@ -273,18 +251,18 @@ extractBBBRating  <- function(url) {
 extractLicenseNumber   <- function(url) {
   ### These 2 lines are for DEBUG, stand alone processing
   ### A minus example
-#      strSingleURL <- "http://www.bbb.org/new-jersey/business-reviews/contractors-general/carlson-bros-inc-in-fair-lawn-nj-17002237"
-#   # strSingleURL <- "http://www.bbb.org/boston/business-reviews/painting-contractors/cq-painting-inc-in-s-weymouth-ma-103741"
-#   url  <- parseThisWebsite(strSingleURL)
+  #      strSingleURL <- "http://www.bbb.org/new-jersey/business-reviews/contractors-general/carlson-bros-inc-in-fair-lawn-nj-17002237"
+  #   # strSingleURL <- "http://www.bbb.org/boston/business-reviews/painting-contractors/cq-painting-inc-in-s-weymouth-ma-103741"
+  #   url  <- parseThisWebsite(strSingleURL)
   
   #   
   strLicenseNumber <- "liscenseNumber" 
   # LicenseNumberNode <- url %>%  html_nodes(xpath="//p[contains(b,'NJ Division of Consumer Affairs')]/span") 
   # LicenseNumberNode <- url %>%  html_nodes(xpath="//p[contains(b,'Massachusetts Division of Professional Licensure')]/span") 
   LicenseNumberNode <- url %>%  html_nodes(xpath="//p/span[contains(.,'The number is ')]") 
-#       print("*** LicenseNumberNode *** ")
-#       print(length(LicenseNumberNode))
-#       print(LicenseNumberNode)
+  #       print("*** LicenseNumberNode *** ")
+  #       print(length(LicenseNumberNode))
+  #       print(LicenseNumberNode)
   if (length(LicenseNumberNode)>0) {
     strLicenseNumber <-   html_text(LicenseNumberNode)
     strLicenseNumber <- gsub("The number is ","",strLicenseNumber)  
@@ -376,18 +354,17 @@ extractAltBusnNamesNotQuiteWorking   <- function(url) {
 }
 ############################################################################
 ### extractBusnCategories
+### New Jersey and Boston, are still working from my ip 2015/08/10
 ############################################################################
 extractBusnCategories   <- function(url) {
   library(stringr)
   ### These 2 lines are for DEBUG, stand alone processing
   # strSingleURL <- "http://www.bbb.org/boston/business-reviews/roofing-contractors/a-roofing-llc-in-williston-vt-121527"
-  strSingleURL <- "http://www.bbb.org/nebraska/business-reviews/fire-and-water-damage-restoration/paul-davis-restoration-in-columbus-ne-300033282"
+  # strSingleURL <- html("http://www.bbb.org/new-jersey/business-reviews/contractors-general/carlson-bros-inc-in-fair-lawn-nj-17002237")
   #   strSingleURL <- "http://www.bbb.org/boston/business-reviews/insurance-companies/brooklawn-insurance-agency-inc-in-new-bedford-ma-62884/customer-reviews/"
-  url  <- parseThisWebsite(strSingleURL)
+  # url  <- parseThisWebsite(strSingleURL)
   # print(html_text(url))
   # print("*** URL DONE ***")
-  
-  #   
   vBusnCategories <- c("BusnCategories")
   vCategories <- url %>%  html_nodes(xpath="//h5[.='Business Category']/following-sibling::*[1]/span") %>% html_text()
   if (length(vCategories)==0) {
@@ -396,20 +373,25 @@ extractBusnCategories   <- function(url) {
     # nodePrincipal <- url %>%  html_nodes(xpath="//h5[.='Business Management']/following-sibling::*[name()='span']") 
     nodePrincipal <- url %>%  html_nodes(xpath="//h5[.='Business Category']/following-sibling::*[1][name()='p']") 
     strCategories <- html_text(nodePrincipal)
+    print("*** strCategories  *** ")
     print(strCategories)
-    vCategories <- strsplit(strCategories, ",")[[1]]
-    print(length(vCategories))
-    print(vCategories)
+    if (length(strCategories)>0) { 
+      vCategories <- strsplit(strCategories, ",")[[1]]
+    }
+    #     print(length(vCategories))
+    #     print(vCategories)
   }
   if (length(vCategories)>0) {
     vBusnCategories <- gsub("\r\n", "", vCategories, fixed = TRUE)
     vBusnCategories <-  str_trim(vBusnCategories)
     # nodeNext <- html_nodes(nodeAltBusnNames, xpath="//h5[.='Alternate Business Names']")
-    print("*** vAltBusnNames  *** ")
-    print(class(vBusnCategories))
-    print(length(vBusnCategories))
+    #     print("*** vBusnCategories  *** ")
+    #     print(class(vBusnCategories))
+    #     print(length(vBusnCategories))
   }
-  print(vBusnCategories)
+  strCategories <- paste(vBusnCategories, collapse = '|')
+  # print(strCategories)
+  return(strCategories)
 }
 ############################################################################
 ### extractContent - Generic
@@ -442,26 +424,26 @@ extractTheAddresses  <- function(url) {
 harvestTheNamesAndAddresses  <- function(url) {
   
   dfComplaints <- as.data.frame(extractTDFromFirst2Tables(url))
-#   print("*** dfComplaints *** ")
-#   print(nrow(dfComplaints))
-#   print(dfComplaints)
+  #   print("*** dfComplaints *** ")
+  #   print(nrow(dfComplaints))
+  #   print(dfComplaints)
   # vComplaintLabels <- extractTheNames(url)
-#   vTDs <- extractTDFromFirst2Tables(url)
-#   print("xxxxxxxx*** vTDs ***xxxxxxx ")
-#   print(paste("class vTDs:", class(vTDs)))
-#   print(paste("length vTDs:", length(vTDs)))
+  #   vTDs <- extractTDFromFirst2Tables(url)
+  #   print("xxxxxxxx*** vTDs ***xxxxxxx ")
+  #   print(paste("class vTDs:", class(vTDs)))
+  #   print(paste("length vTDs:", length(vTDs)))
   # vBetterTDs <- str_trim(vTDs)
   # print(vTDs)
   dfInfo <- dfComplaints
   
   strname <- extractContent(url, "name")
   vInfo <- c(strname)
-#   strAddressStreet <- extractStreetAddresses(url)
-#   vInfo <- c(vInfo, strAddressStreet)
-#   strAddressLocality <- extractAddressLocality(url)
-#   vInfo <- c(vInfo, strAddressLocality)
-#   strAddressRegion <- extractAddressRegion(url)
-#   vInfo <- c(vInfo, strAddressRegion)
+  #   strAddressStreet <- extractStreetAddresses(url)
+  #   vInfo <- c(vInfo, strAddressStreet)
+  #   strAddressLocality <- extractAddressLocality(url)
+  #   vInfo <- c(vInfo, strAddressLocality)
+  #   strAddressRegion <- extractAddressRegion(url)
+  #   vInfo <- c(vInfo, strAddressRegion)
   
   strVariable <- "streetAddress"
   dfInfo[nrow(dfInfo) +1,] <- c(strVariable,extractContent(url, strVariable))
@@ -492,8 +474,8 @@ harvestTheNamesAndAddresses  <- function(url) {
   
   # vInfo <- c(vInfo, vTDs)
   
-    #   vTotals <- extractTheAddresses(url)
-#   print(class(vTotals))
+  #   vTotals <- extractTheAddresses(url)
+  #   print(class(vTotals))
   
   print("*** harvestTheNamesAndAddresses - Complete ***")
   return(dfInfo)
@@ -515,9 +497,9 @@ extractContentAttrAddToDF <- function(url, strVariable, dfInfo) {
   else {
     strElementValue <- extractElement(url, strVariable)
     if (length(strElementValue)>0) {
-#       print("*** strNewValue ***")
-#       print(strValue)
-#       print(length(strValue))
+      #       print("*** strNewValue ***")
+      #       print(strValue)
+      #       print(length(strValue))
       strValue <- strElementValue
     }
   }
@@ -529,9 +511,9 @@ extractContentAttr  <- function(url, strItemprop) {
   strXPath <- paste(vXPath, collapse="")
   ContentNode <- url %>%  html_nodes(xpath=strXPath) 
   strContentText <-   html_attr(ContentNode, "content")
-#   print("***strContentText***")
-#   print(strContentText)
-#   print(length(strContentText))
+  #   print("***strContentText***")
+  #   print(strContentText)
+  #   print(length(strContentText))
   if (strItemprop=='naics'){
     if (length(strContentText)==0) {
       strContentText <- strItemprop
@@ -568,82 +550,18 @@ extractElement  <- function(url, strItemprop) {
   # print(paste("elementText: ",elementText))
   return(elementText)
 }
+
 ############################################################################
-### createLocalExcelFileNa
+### createListOfBBBReviewURLs
+### Start with vector, filter as data.frame, return a vector
 ############################################################################
-createLocalExcelFileNa <- function(strBaseFileNa) {
-  strExcelFileNa <- "C:/Users/p622403/Documents/Work/R/BBB/Details/"
-  strExcelFileNa <- paste(strExcelFileNa, strBaseFileNa, sep='')
-  strExcelFileNa <- paste(strExcelFileNa, "_", sep='')
-  strExcelFileNa <- paste(strExcelFileNa,gsub(":","",Sys.time()),sep='')
-  strExcelFileNa <- gsub("-","_",strExcelFileNa)
-  strExcelFileNa <- gsub(" ","_",strExcelFileNa)
-  strExcelFileNa <- paste(strExcelFileNa, ".xls", sep="")
-  return(strExcelFileNa)
-  # print(strExcelFileNa)
-}
-createLocalCSVFileNa <- function(strBaseFileNa, blnTimeStampI) {
-  strCSVFileNa <- "C:/Users/p622403/Documents/Work/R/BBB/Details/"
-  strCSVFileNa <- paste(strCSVFileNa, strBaseFileNa, sep='')
-  if (blnTimeStampI) {
-    strCSVFileNa <- paste(strCSVFileNa, "_", sep='')
-    strCSVFileNa <- paste(strCSVFileNa,gsub(":","",Sys.time()),sep='')
-  }
-  strCSVFileNa <- gsub("-","_",strCSVFileNa)
-  strCSVFileNa <- gsub(" ","_",strCSVFileNa)
-  strCSVFileNa <- paste(strCSVFileNa, ".csv", sep="")
-  return(strCSVFileNa)
-  # print(strExcelFileNa)
-}
-############################################################################
-### harvestListOfNJPainters
-############################################################################
-harvestListOfNJPainters  <- function() {
-  print("*** harvestListOfNJPainters - Started ***")
-  ### Retrieve the HTML into an XML Dom
-  ### New Jesey
-  strURL <- "http://www.bbb.org/new-jersey/accredited-business-guide/painting-contractors/299/"
-  xmlDOMWS <- parseThisWebsite(strURL)
-  vURL4s <- extractListOfURLs(xmlDOMWS)
-  print(paste("Length dfURL4s: ", length(vURL4s)))
-  
-  dfURL4s <- as.data.frame(vURL4s,stringsAsFactors=FALSE)
-  vColNames <- c("bbbReviewURL")
-  names(dfURL4s) <- vColNames
-  print(paste("Length dfURL4s: ", nrow(dfURL4s)))
-  # print(head(dfURL4s))
-  # print(dfURL4s[30:42,])
-  
-  dfURLs3 <- filter(dfURL4s, grepl("business-reviews", bbbReviewURL))
-  print(paste("Length dfURLs3: ", nrow(dfURLs3)))
-  
-  dfURLs2 <- filter(dfURLs3, !grepl("/quote/", bbbReviewURL))
-  print(paste("Length dfURLs2: ", nrow(dfURLs2)))
-  dfURLs2$bbbReviewURL <-  paste("http://www.bbb.org",dfURLs2$bbbReviewURL, sep="")
-  
-  dfURLs1 <-unique(dfURLs2)
-  print(paste("Length dfURLs1: ", nrow(dfURLs1)))
-  #   intLthdfURLs <- nrow(dfURLs)
-  #   print(paste("intLthdfURL2s: ",intLthdfURL2s))
-  
-  ##############################################################
-  ### Save List as Excel File 
-  ##############################################################
-  # SaveDataFrameAsExcel(dfURLs2, createLocalExcelFileNa("harvestListOfMAPainters")) 
-  
-  print("*** harvestListOfNJPainters - Complete ***")
-  return(dfURLs1)
-}
-############################################################################
-### harvestListOfSSCategory
-############################################################################
-harvestListOfSSCategory  <- function(strURL, xmltreeLog) {
-  print("*** harvestListOfSSCategory - Started ***")
-  xmltreeLog$addTag("harvestListOfSSCategory", close=FALSE)
+createListOfBBBReviewURLs  <- function(strURL, xmltreeLog) {
+  print("*** createListOfBBBReviewURLs - Started ***")
+  xmltreeLog$addTag("createListOfBBBReviewURLs", close=FALSE)
   xmltreeLog$addTag("strListURL", strURL) 
   ### Retrieve the HTML into an XML Dom
   ### New Jesey
-  print(strURL)
+  # print(strURL)
   xmlDOMWS <- parseThisWebsite(strURL)
   vURL4s <- extractListOfURLs(xmlDOMWS)
   # print(paste("Length dfURL4s: ", length(vURL4s)))
@@ -666,6 +584,7 @@ harvestListOfSSCategory  <- function(strURL, xmltreeLog) {
   ##########################################################################################
   if (nrow(dfURLs3)>0) {
     dfURLs2 <- filter(dfURLs3, !grepl("/quote/", bbbReviewURL))
+    dfURLs2 <- filter(dfURLs2, !grepl("/customer-reviews/", bbbReviewURL))
     for (w in 1:nrow(dfURLs2)){
       #       print(dfURLs2$bbbReviewURL[w])
       #       print(length(grep("http://www.bbb.org",dfURLs2$bbbReviewURL[w])))
@@ -673,8 +592,8 @@ harvestListOfSSCategory  <- function(strURL, xmltreeLog) {
       if (length(grep("http://www.bbb.org",dfURLs2$bbbReviewURL[w]))==0) {
         dfURLs2$bbbReviewURL[w] <- paste("http://www.bbb.org",dfURLs2$bbbReviewURL[w], sep="")  
       }
-#       print("dfURLs2$bbbReviewURL[w]")
-#       print(dfURLs2$bbbReviewURL[w])
+      #       print("dfURLs2$bbbReviewURL[w]")
+      #       print(dfURLs2$bbbReviewURL[w])
       # dfURLs2$bbbReviewURL <-  paste("http://www.bbb.org",dfURLs2$bbbReviewURL, sep="")
     }
     # print(paste("nrow(dfURLs2): ", nrow(dfURLs2)))
@@ -688,288 +607,93 @@ harvestListOfSSCategory  <- function(strURL, xmltreeLog) {
   }
   else{
     dfURLs1 <- data.frame(Lables=character(), Vals=character(), stringsAsFactors=FALSE) 
+    xmltreeLog$addTag("error",  close=FALSE)
+    xmltreeLog$addTag("message", "Zero BBBreview URLs found in this list") 
+    xmltreeLog$addTag("strURL", strURL) 
   }
   ##############################################################
   ### Save List as Excel File 
   ##############################################################
   # SaveDataFrameAsExcel(dfURLs2, createLocalExcelFileNa("harvestListOfMAPainters")) 
-  xmltreeLog$closeTag() 
-  print("*** harvestListOfSSCategory - Complete ***")
-  return(dfURLs1)
+  xmltreeLog$closeTag()
+  vListOfURLS <- dfURLs1$bbbReviewURL
+  print("*** createListOfBBBReviewURLs - Complete ***")
+  return(vListOfURLS)
 }
-############################################################################
-### harvestListOfTulsaPainters
-############################################################################
-harvestListOfTulsaPainters  <- function() {
-  print("*** harvestListOfTulsaPainters - Started ***")
-  ### Retrieve the HTML into an XML Dom
-  ### New Jesey
-  # strURL <- "http://www.bbb.org/new-jersey/accredited-business-guide/painting-contractors/299/"
-  ### Oklahoma. Tulsa
-  strURL <- "http://www.bbb.org/tulsa/accredited-business-directory/painting-contractors#"
-  xmlDOMWS <- parseThisWebsite(strURL)
-  vURL4s <- extractListOfURLs(xmlDOMWS)
-  print(paste("Length dfURL4s: ", length(vURL4s)))
-  
-  dfURL4s <- as.data.frame(vURL4s,stringsAsFactors=FALSE)
-  vColNames <- c("bbbReviewURL")
-  names(dfURL4s) <- vColNames
-  print(paste("Length dfURL4s: ", nrow(dfURL4s)))
-  # print(head(dfURL4s))
-  # print(dfURL4s[100:112,])
-  
-  dfURLs3 <- filter(dfURL4s, grepl("business-reviews", bbbReviewURL))
-  print(paste("Length dfURLs3: ", nrow(dfURLs3)))
-#   dfURLs <- filter(dfURLs3, !grepl("/quote/", bbbReviewURL))
-#   dfURLs$bbbReviewURL <-  paste("http://www.bbb.org",dfURLs2$bbbReviewURL, sep="")
-#   intLthdfURLs <- nrow(dfURLs)
-#   print(paste("intLthdfURL2s: ",intLthdfURL2s))
 
-  ##############################################################
-  ### Save List as Excel File 
-  ##############################################################
-  # SaveDataFrameAsExcel(dfURLs3, createLocalExcelFileNa()) 
-  
-  print("*** harvestListOfTulsaPainters - Complete ***")
-  return(dfURLs3)
-}
-############################################################################
-### harvestListOfMAPainters
-############################################################################
-harvestListOfMAPainters  <- function() {
-  print("*** harvestListOfMAPainters - Started ***")
-  ### MA, ME, VT, RI, page 1 of 4
-  # strURL <- "http://www.bbb.org/boston/accredited-business-guide/painting-contractors/437/"
-  ### MA, ME, VT, RI, page 3 of 4
-  strURL <- "http://www.bbb.org/boston/accredited-business-guide/painting-contractors/437?page=3"
-  xmlDOMWS <- parseThisWebsite(strURL)
-  vURL4s <- extractListOfURLs(xmlDOMWS)
-  print(paste("Length dfURL4s: ", length(vURL4s)))
-  
-  dfURL4s <- as.data.frame(vURL4s,stringsAsFactors=FALSE)
-  vColNames <- c("bbbReviewURL")
-  names(dfURL4s) <- vColNames
-  print(paste("Length dfURL4s: ", nrow(dfURL4s)))
-  # print(head(dfURL4s))
-   # print(dfURL4s[30:42,])
-  
-  dfURLs3 <- filter(dfURL4s, grepl("business-reviews", bbbReviewURL))
-  print(paste("Length dfURLs3: ", nrow(dfURLs3)))
-  
-  dfURLs2 <- filter(dfURLs3, !grepl("/quote/", bbbReviewURL))
-  print(paste("Length dfURLs2: ", nrow(dfURLs2)))
-  dfURLs2$bbbReviewURL <-  paste("http://www.bbb.org",dfURLs2$bbbReviewURL, sep="")
-  
-  dfURLs1 <-unique(dfURLs2)
-  print(paste("Length dfURLs1: ", nrow(dfURLs1)))
-  #   intLthdfURLs <- nrow(dfURLs)
-  #   print(paste("intLthdfURL2s: ",intLthdfURL2s))
-  
-  ##############################################################
-  ### Save List as Excel File 
-  ##############################################################
-  # SaveDataFrameAsExcel(dfURLs2, createLocalExcelFileNa("harvestListOfMAPainters")) 
-  
-  print("*** harvestListOfMAPainters - Complete ***")
-  return(dfURLs1)
-}
-############################################################################
-### harvestDetailsOfPainters
-############################################################################
-harvestDetailsOfPainters  <- function() {
-  ### Initialize
-  getHarvestPackages()
-  
-  # dfURLs <- harvestListOfPainters()
-  dfURLs <- harvestListOfTulsaPainters()
-  
-  colClasses = c(rep("character",16))
-  #   vColNames  = c("Labels", "Vals")
-  df4 <- data.frame(colClasses, stringsAsFactors = FALSE)
-  
-  # strSingleURL <- dfURLs[3,1]
-  for(i in 1:nrow(dfURLs)){
-    strSingleURL <- dfURLs[i,1]
-    # print(paste("Single URL:", strSingleURL))
-    url  <- parseThisWebsite(strSingleURL)
-    #   
-    # dfInfo <- harvestTheNamesAndAddresses(url) 
-    dfComplaints <- as.data.frame(extractTDFromFirst2Tables(url))
-    dfInfo <- dfComplaints
-    dfInfo[nrow(dfInfo) +1,] <- c("BBBURL",strSingleURL)
-    # strVariable <- "streetAddress"
-    vVariables <- c("name","streetAddress","addressLocality","addressRegion","postalCode","telephone","latitude","longitude","foundingDate")
-    for(s in 1:length(vVariables)){
-      dfInfo <- extractElementAddToDF(url, vVariables[s], dfInfo)  
-    }
-    # print("*** dfInfo *** ")
-    # print(dfInfo) 
-    #   
-    dfRow <- data.frame(t(dfInfo))
-    dfRow2 <- dfRow[2,]
-    ##############################################################
-    ### Save List as Excel File 
-    ##############################################################
-    SaveDataFrameAsExcel(dfRow2, createLocalExcelFileNa("SingleTulsaPainter"))
-    #     print("*** dfRow2 *** ")
-    #     print(str(dfRow2))
-    if(i==1) {
-      df4 <- dfRow2
-      print(str(df4))
-      # print(df4)
-    }
-    else {
-      # df4[nrow(df4)+1,] <- dfRow2[1,]
-      df4 <- rbind(df4, dfRow2[1,])
-      # print(str(df4))
-    }
-  }
-#   print("*** df4 ***")
-#   print(str(df4))
-  ##############################################################
-  ### Save List as Excel File 
-  ##############################################################
-  SaveDataFrameAsExcel(df4, createLocalExcelFileNa("TulsaPainters")) 
-  
-  print("*** harvestDetailsOfPainters - Complete ***")
-}
-############################################################################
-### harvestDetailsOfXXPainters
-############################################################################
-harvestDetailsOfXXPainters  <- function() {
-  ### Initialize
-  getHarvestPackages()
-  xmltreeLog <- startXMLTree()
-  
-  # strURL <- "http://www.bbb.org/boston/accredited-business-guide/painting-contractors/437/"
-  ### MA, ME, VT, RI, page 3 of 4
-  # strURL <- "http://www.bbb.org/boston/accredited-business-guide/painting-contractors/437?page=3"
-  strListURL <- "http://www.bbb.org/new-jersey/accredited-business-directory/siding-contractors"
-  dfURLs <- harvestListOfSSCategory(strListURL, xmltreeLog)
-  
-  ### define empty Data.frame
-  vVariables <- c("legalName","streetAddress","addressLocality","addressRegion","postalCode","telephone","faxNumber","url","latitude","longitude","foundingDate","naics")
-  colClasses = c(rep("character",length(vVariables)))
-  #   vColNames  = c("Labels", "Vals")
-  df4 <- data.frame(colClasses, stringsAsFactors = FALSE)
-  
-  # strSingleURL <- dfURLs[3,1]
-  for(i in 1:nrow(dfURLs)){
-  # for(i in 1:13){
-    print(paste("processing harvestDetailsOfXXPainters number: ", i))
-    strSingleURL <- dfURLs[i,1]
-    # print(paste("Single URL:", strSingleURL))
-    url  <- parseThisWebsite(strSingleURL)
-    #   
-    # dfInfo <- harvestTheNamesAndAddresses(url) 
-    dfComplaints <- as.data.frame(extractTDFromFirst2Tables(url))
-    dfInfo <- dfComplaints
-    dfInfo <- rbind(dfInfo, c("BBBRating",extractBBBRating(url)))
-    # print(paste("nrow(dfInfo):", nrow(dfInfo)))
-    if(nrow(dfInfo)==0) {
-      dfInfo <- data.frame(Labels = character(0), Vals = character(0), stringsAsFactors = FALSE)
-      # dfInfo <- rbind(dfInfo, c("BBBURL",strSingleURL))
-      # print(str(dfInfo))
-      # print(df4)
-    }
-    #     else {
-    #       dfInfo[nrow(dfInfo) +1,] <- c("BBBURL",strSingleURL)
-    #     }
-    # strVariable <- "streetAddress"
-    
-    for(s in 1:length(vVariables)){
-      dfInfo <- extractContentAttrAddToDF(url, vVariables[s], dfInfo)  
-    }
-    dfInfo <- rbind(dfInfo, c("LicenseNumber",extractLicenseNumber(url)))
-    dfInfo <- rbind(dfInfo, c("BBBURL",strSingleURL))
-    # print("*** dfInfo *** ")
-    # print(dfInfo) 
-    #   
-    dfRow <- data.frame(t(dfInfo))
-    dfRow2 <- dfRow[2,]
-    ##############################################################
-    ### Save List as Excel File 
-    ##############################################################
-    # SaveDataFrameAsExcel(dfRow2, createLocalExcelFileNa("SingleMAPainter"))
-    #     print("*** dfRow2 *** ")
-    #     print(str(dfRow2))
-    if(i==1) {
-      df4 <- dfRow2
-      # print(str(df4))
-      # print(df4)
-    }
-    else {
-      # df4[nrow(df4)+1,] <- dfRow2[1,]
-      #       print("*** rbind ***")
-      #       print(nrow(dfRow2))
-      #       print(ncol(dfRow2))
-      #       print(dfRow2)
-      if ((nrow(dfRow2)>0) && (ncol(dfRow2)==ncol(df4))) {
-        #         print("*** df4 ***")
-        #         print(nrow(df4))
-        #         print(ncol(df4))
-        df4 <- rbind(df4, dfRow2[1,])
-      }
-      # print(str(df4))
-    }
-  }
-  #   print("*** df4 ***")
-  #   print(str(df4))
-  ##############################################################
-  ### Save List as Excel File 
-  ##############################################################
-  SaveDataFrameAsExcel(df4, createLocalExcelFileNa("harvestDetailsOfNJsiding_P1of3")) 
-  
-  ##############################################################
-  ### Close and save XML Log
-  ##############################################################
-  closeXMLTree(xmltreeLog)
-  # strPath <- "C:/Users/p622403/Documents/Work/R/BBB/"
-  saveXML(xmltreeLog, file=CreateLocalXMLFileNa())
-  
-  
-  print("*** harvestDetailsOfMAPainters - Complete ***")
-}
 ############################################################################
 ### useListExtractDetails
 ############################################################################
-useListExtractDetails  <- function(xmltreeLog, strListURL, strRegion, strCategory, strPage) {
+useListExtractDetails  <- function(xmltreeLog, strListURL, strRegion, strCategory, strPage, vMasterURL) {
   print("*** useListExtractDetails - Started ***")
   
-  dfURLs <- harvestListOfSSCategory(strListURL, xmltreeLog)
+  vListOfURLs <- createListOfBBBReviewURLs(strListURL, xmltreeLog)
+  ### Eliminate any that have already been done
+  vListOfURLs  <- vListOfURLs[!vListOfURLs %in% vMasterURL]
+  vDuplicateURLs  <- vListOfURLs[vListOfURLs %in% vMasterURL]
+  for(strDupeURL in vDuplicateURLs) {
+    print("*** DUPLICATE found ***")
+    print(strDupeURL)
+    xmltreeLog$addTag("error",  close=FALSE)
+    xmltreeLog$addTag("message", "Duplicate URL found") 
+    xmltreeLog$addTag("strDupeURL", strDupeURL) 
+    xmltreeLog$closeTag()
+  }
+  vMasterURL <- c(vMasterURL, vListOfURLs)
+  
+    # dfURLs <- createListOfBBBReviewURLs(strListURL, xmltreeLog)
+  ### Only One  FUDGE for Debug 2015/08/12
+  # vPages <- c("http://www.bbb.org/boston/business-reviews/roofing-contractors/a-roofing-llc-in-williston-vt-121527")
+  # vPages <- c("http://www.bbb.org/new-jersey/business-reviews/contractors-general/carlson-bros-inc-in-fair-lawn-nj-17002237")
+  # SPonsored BBBreview, very little info :   vListOfURLs <- c("http://www.bbb.org/boston/business-reviews/stone-setting/spencer-associates-in-beverly-ma-116362/customer-reviews/")
+  # vListOfURLs<- "http://www.bbb.org/boston/business-reviews/stone-setting/spencer-associates-in-beverly-ma-116362"
+  #     vPages <- c("http://www.bbb.org/boston/business-reviews/stone-setting/spencer-associates-in-beverly-ma-116362/customer-reviews/")
+  #     dfURLs <- as.data.frame(vPages, stringsAsFactors=FALSE)
+  # print(vListOfURLs)
   ##############################################################
   ### Save List dataframe  as csv file
   ##############################################################
-#   if (nrow(dfURLs)>0) {
-#     vBaseName <- c(gsub("-","",strRegion), "_",  gsub("-","",strCategory), "_", gsub("=","",strPage))
-#     strBaseName <- paste(vBaseName, collapse = "")
-#     strFullFileNa <- createLocalCSVFileNa(strBaseName)
-#     print("*** List File Name ***")
-#     print(strFullFileNa)
-#     #   xmltreeLog$addTag("strFullFileNa", strFullFileNa) 
-#     SaveDataFrameAsCSV(dfURLs, strFullFileNa, FALSE) 
-#   }
+  #   if (nrow(dfURLs)>0) {
+  #     vBaseName <- c(gsub("-","",strRegion), "_",  gsub("-","",strCategory), "_", gsub("=","",strPage))
+  #     strBaseName <- paste(vBaseName, collapse = "")
+  #     strFullFileNa <- createLocalCSVFileNa(strBaseName)
+  #     print("*** List File Name ***")
+  #     print(strFullFileNa)
+  #     #   xmltreeLog$addTag("strFullFileNa", strFullFileNa) 
+  #     SaveDataFrameAsCSV(dfURLs, strFullFileNa, FALSE) 
+  #   }
   
   
   ### define empty Data.frame
   vVariables <- c("legalName","streetAddress","addressLocality","addressRegion","postalCode","telephone","faxNumber","url","latitude","longitude","foundingDate","naics")
   colClasses = c(rep("character",length(vVariables)))
   #   vColNames  = c("Labels", "Vals")
-  df4 <- data.frame(colClasses, stringsAsFactors = FALSE)
-  intTopRow <- min(nrow(dfURLs), 27)
-  print("*** intTopRow ***")
-  print(intTopRow)
+  dfInfoPage <- data.frame(colClasses, stringsAsFactors = FALSE)
+  # intTopRow <- min(length(vListOfURLs), 5)
+  intTopRow <- min(length(vListOfURLs), 270)
+  #   print("*** intTopRow ***")
+  #   print(intTopRow)
   if (intTopRow>0) {
     # for(i in 1:nrow(dfURLs)){
     for(i in 1:intTopRow){
       print(paste("extracting Details number: ", i))
-      strSingleURL <- dfURLs[i,1]
-      print(paste("Single URL:", strSingleURL))
+      # strSingleURL <- dfURLs[i,1]
+      strSingleURL <- vListOfURLs[i]
+      # print(paste("Single URL:", strSingleURL))
       url  <- parseThisWebsite(strSingleURL)
+      # print("Website Parsed")
       #   
       # dfInfo <- harvestTheNamesAndAddresses(url) 
       dfComplaints <- as.data.frame(extractTDFromFirst2Tables(url))
-      # print("dfComplaints complete")
+      #       print("uuuuu dfComplaints complete uuuuu")
+      #       print(nrow(dfComplaints))
+      if (nrow(dfComplaints)==0) {
+        xmltreeLog$addTag("error",  close=FALSE)
+        xmltreeLog$addTag("message", "Complaints table not found") 
+        xmltreeLog$addTag("strSingleURL", strSingleURL) 
+        xmltreeLog$closeTag()
+        next
+      }
       dfInfo <- dfComplaints
       dfInfo <- rbind(dfInfo, c("BBBRating",extractBBBRating(url)))
       # print(paste("nrow(dfInfo) : ", nrow(dfInfo)))
@@ -984,10 +708,12 @@ useListExtractDetails  <- function(xmltreeLog, strListURL, strRegion, strCategor
       }
       
       dfInfo <- rbind(dfInfo, c("LicenseNumber",extractLicenseNumber(url)))
+      dfInfo <- rbind(dfInfo, c("BBBCategories",extractBusnCategories(url)))
       dfInfo <- rbind(dfInfo, c("BBBURL",strSingleURL))
       dfInfo <- rbind(dfInfo, c("BBBRegion", strRegion))
       dfInfo <- rbind(dfInfo, c("BBBCategory", strCategory))
       dfInfo <- rbind(dfInfo, c("BBBPage", strPage))
+      dfInfo <- rbind(dfInfo, c("Item", toString(i)))
       # print("*** dfInfo *** ")
       # print(dfInfo) 
       
@@ -997,35 +723,43 @@ useListExtractDetails  <- function(xmltreeLog, strListURL, strRegion, strCategor
       dfRow <- data.frame(t(dfInfo))
       dfRow2 <- dfRow[2,]
       
-      ##############################################################
+      ##################################################################
       ### Start New dataframe, or append new row to existing dataframe
-      ##############################################################
+      ##################################################################
       if(i==1) {
-        df4 <- dfRow2
+        dfInfoPage <- dfRow2
       }
       else {
-        if ((nrow(dfRow2)>0) && (ncol(dfRow2)==ncol(df4))) {
-          df4 <- rbind(df4, dfRow2[1,])
+        if ((nrow(dfRow2)>0) && (ncol(dfRow2)==ncol(dfInfoPage))) {
+          dfInfoPage <- rbind(dfInfoPage, dfRow2[1,])
         }
-        # print(str(df4))
+        # print(str(dfInfoPage))
       }
     }
   }
   ##############################################################
   ### Save List dataframe  as Excel File with 2 rows
   ##############################################################
-#   vBaseName <- c(gsub("-","",strRegion), "_",  gsub("-","",strCategoryFileNa), "_", gsub("=","",strPage))
-#   strBaseName <- paste(vBaseName, collapse = "")
-# #   strFullFileNa <- createLocalExcelFileNa(strBaseName)
-# #   SaveDataFrameAsExcel(df4, strFullFileNa) 
-#     strFullFileNa <- createLocalCSVFileNa(strBaseName)
-#     print("*** List File Name ***")
-#     print(strFullFileNa)
-#   #   xmltreeLog$addTag("strFullFileNa", strFullFileNa) 
-#     SaveDataFrameAsCSV(df4, strFullFileNa) 
+  #   vBaseName <- c(gsub("-","",strRegion), "_",  gsub("-","",strCategoryFileNa), "_", gsub("=","",strPage))
+  #   strBaseName <- paste(vBaseName, collapse = "")
+  # #   strFullFileNa <- createLocalExcelFileNa(strBaseName)
+  # #   SaveDataFrameAsExcel(df4, strFullFileNa) 
+  #     strFullFileNa <- createLocalCSVFileNa(strBaseName)
+  #     print("*** List File Name ***")
+  #     print(strFullFileNa)
+  #   #   xmltreeLog$addTag("strFullFileNa", strFullFileNa) 
+  #     SaveDataFrameAsCSV(df4, strFullFileNa) 
   
   print("*** useListExtractDetails - Complete ***")
-  return(df4)
+#   print("*** dfInfoPage ***")
+#   print(nrow(dfInfoPage))
+#   print(class(dfInfoPage))
+#   print(dfInfoPage)
+  # return(dfInfoPage)
+  # dfFiller <- as.data.frame(matrix(1:10, ncol = 2, nrow = 5), colClasses = vColClasses)
+  # returnList <- list("dfInfoPage" = dfInfoPage, "dfFiller" = dfFiller)
+  returnList <- list("dfInfoPage" = dfInfoPage, "vMasterURL" = vMasterURL)
+  return(returnList)
 }
 ############################################################################
 ### findPages
@@ -1034,9 +768,9 @@ findPages   <- function(strListURL) {
   ### Initialize 
   vPages <- c("page=1")
   # strListURL <- "http://www.bbb.org/boston/accredited-business-Guide/painting-contractors/437/?page=1"
-#   strListURL <- "http://www.bbb.org/new-jersey/accredited-business-directory/painting-contractors/437/?page=1"
+  #   strListURL <- "http://www.bbb.org/new-jersey/accredited-business-directory/painting-contractors/437/?page=1"
   url  <- parseThisWebsite(strListURL)
-#   print("*** url done *** ")
+  #   print("*** url done *** ")
   
   # selector_complaint_label <- ".complaint-table .even,.odd td:first-child"
   selector_class_dirp <- ".dirpaging a"
@@ -1050,10 +784,10 @@ findPages   <- function(strListURL) {
   #   print(vClassDirp)
   if (length(vClassDirp)) {
     vPages <-  sapply(vClassDirp, prependPage)
-#     print("*** vPages *** ")
-#     print(class(vPages))
-#     print(length(vPages))
-#     print(vPages)
+    #     print("*** vPages *** ")
+    #     print(class(vPages))
+    #     print(length(vPages))
+    #     print(vPages)
   }
   #   print("*** drURLs ***")
   #   print(nrow(dfURLs))
@@ -1067,11 +801,13 @@ prependPage <- function(vIn) {
 ############################################################################
 ### processPages
 ############################################################################
-processPages   <- function(xmltreeLog, strRegion, strCategory) {
+processPages   <- function(xmltreeLog, strRegion, strCategory, vMasterURL) {
   print("*** processPages - Started ***")
   vListURL <- c("http://www.bbb.org/", strRegion, "/accredited-business-directory/", strCategory, "?page=1")
   strListURL <- paste(vListURL,  collapse="")
   # print(paste("strListURL", strListURL))
+  ### Only One  FUDGE for Debug 2015/08/11
+  # vPages <- c("page=1")
   vPages <- findPages(strListURL)
   
   for(p in 1:length(vPages)){
@@ -1083,16 +819,35 @@ processPages   <- function(xmltreeLog, strRegion, strCategory) {
     vListURL <- c("http://www.bbb.org/", strRegion, "/accredited-business-directory/", strCategory, "?", strPage)
     strListURL <- paste(vListURL,  collapse="")
     # print(paste("strListURL: ", strListURL))
-    # xmltreeLog$addTag("strListURL", strListURL) 
+    # xmltreeLog$addTag("strListURL", strListURL)
+    # dfPage <- useListExtractDetails(xmltreeLog, strListURL, strRegion, strCategory, strPage, vHOLDMaster)
+    # list[dfInfoPage, dfFiller]  <- useListExtractDetails(xmltreeLog, strListURL, strRegion, strCategory, strPage, vMasterURL)
+    lTwo  <- useListExtractDetails(xmltreeLog, strListURL, strRegion, strCategory, strPage, vMasterURL)
+#     print("*** lTwo ***")
+#     print(class(lTwo))
+#     print(str(lTwo))
+    vMasterURL <- lTwo$vMasterURL
+#     print("*** vMasterURL ***")
+#     print(class(vMasterURL))
+#     print(length(vMasterURL))
+#     dfFiller <- lTwo$dfFiller
+#     print("*** dfFiller ***")
+#     print(class(dfFiller))
+#     print(nrow(dfFiller))
+#     print(dfFiller)
+    dfPage <- lTwo$dfInfoPage
+#     print("*** dfPage ***")
+#     print(class(dfPage))
+#     print(dfPage)
     
-    dfPage <- useListExtractDetails(xmltreeLog, strListURL, strRegion, strCategory, strPage)
     if (p==1) {
       dfPages <- dfPage
     }
     else {
       if ((nrow(dfPage)>0) && (ncol(dfPage)==ncol(dfPages))) {
         dfPages <- rbind(dfPages, dfPage)
-        print(paste("nrow(dfPages):",nrow(dfPages)))
+        # print(paste("nrow(dfPages):",nrow(dfPages)))
+        xmltreeLog$addTag("NumberOfPages", as.character(nrow(dfPages))) 
       }
     }
     xmltreeLog$closeTag()
@@ -1103,56 +858,79 @@ processPages   <- function(xmltreeLog, strRegion, strCategory) {
   vBaseName <- c(gsub("-","",strRegion), gsub("-","",strCategory))
   strBaseName <- paste(vBaseName, collapse = "")
   # strFullFileNa <- createLocalExcelFileNa(strBaseName)
-  strFullFileNa <- createLocalCSVFileNa(strBaseName, FALSE)
+  strFullFileNa <- createLocalCSVFileNa(strBaseName, blnTimeStampI=TRUE, blnLaptop=TRUE)
   # print(strFullFileNa)
   xmltreeLog$addTag("strFullFileNa", strFullFileNa) 
   # SaveDataFrameAsExcel(dfPages, strFullFileNa) 
   SaveDataFrameAsCSV(dfPages, strFullFileNa, FALSE)
-  
   print("*** processPages - Complete ***")
+  # return(dfPages)
+  returnList <- list("dfPages" = dfPages, "vMasterURL" = vMasterURL)
+  return(returnList)
 }
 ############################################################################
 ### processCategories
 ############################################################################
-processCategories   <- function(xmltreeLog, strRegion) {
+processCategories   <- function(xmltreeLog, strRegion, vMasterURL) {
   print("*** processCategories - Started ***")
   ### , "Smoke Odor Counteracting Service" does not exist in Central Mass  
-  # vCategories <- c("contractors-flooring", "fire-water-damage-restoration", "insurance-fire-flood-specialists","lawn-tree-care", "mold-and-mildew-inspection", "painting-contractors", "siding-contractors","smoke-odor-counteracting-service", "tree-service", "Water-Heaters-Repairing","windows")
-  # vCategories <- c("mold-and-mildew-inspection", "mold-consulting-and-testing")
+  ### vCategories <- c("mold-and-mildew-inspection", "mold-consulting-and-testing")
   vCategories <- vectorFromExcelFile()
+  ### if you want to use only one category, then change the first worksheet in the file
   for(c in 1:length(vCategories)){
     xmltreeLog$addTag("Category", close=FALSE) 
     xmltreeLog$addTag("catnum", as.character(vCategories[c]))
-    dfInfo <- processPages(xmltreeLog, strRegion, vCategories[c])  
+    # dfInfo <- processPages(xmltreeLog, strRegion, vCategories[c], vMasterURL)  
+    lTwo <- processPages(xmltreeLog, strRegion, vCategories[c], vMasterURL)  
+    dfInfo <- lTwo$dfInfo
+    vMasterURL <- lTwo$vMasterURL
     xmltreeLog$closeTag()
   }
   print("*** processCategories - Complete ***")
+  returnList <- list("dfInfo" = dfInfo, "vMasterURL" = vMasterURL)
+  return(returnList)
 }
 ############################################################################
 ### processRegions
 ############################################################################
 processRegions   <- function() {
   print("*** processRegions - Started ***")
+  ########################################################################################
   ### Initialize
+  ########################################################################################
   getHarvestPackages()
-  xmltreeLog <<- startXMLTree()
+  blnLaptop = TRUE
+  ### Global Variable
+  # xmltreeLog <<- startXMLTree()
+  assign("xmltreeLog", startXMLTree(), envir = .GlobalEnv)
+  assign("vMasterURL",  vector(), envir = .GlobalEnv)
+  # vMasterURL <<- vector()
   
-  # vRegions <- c("boston","central-texas", "central-western-massachusetts","chicago", "columbia","dallas", "eastern-washington", "greater-maryland","myrtle-beach", "new-jersey","new-york-city", "norfolk","northeast-california", "pittsburgh","richmond", "south-east-florida", "upstate-new-york", "upstatesc","washington-dc-eastern-pa","western-virginia")
-  vRegions <- c("eastern-oklahoma","central-oklahoma","nebraska","utah","wyoming-and-northern-colorado")
+  # vRegions <- c("boston","central-texas", "central-oklahoma", "central-western-massachusetts","chicago", "columbia","dallas", "eastern-oklahoma", "eastern-washington", "greater-maryland","myrtle-beach", "nebraska", "new-jersey","new-york-city", "norfolk","northeast-california", "pittsburgh","richmond", "south-east-florida", "upstate-new-york", "upstatesc","utah", "washington-dc-eastern-pa","western-virginia","wyoming-and-northern-colorado")
+  vRegions <- c("new-jersey","boston")
   # "central-california-inland-empire"  ???
   for(r in 1:length(vRegions)){
     xmltreeLog$addTag("Region",  close=FALSE) 
     xmltreeLog$addTag("regnum", as.character(vRegions[r]))
-    dfInfo <- processCategories(xmltreeLog, vRegions[r])  
+    # dfInfo <- processCategories(xmltreeLog, vRegions[r], vMasterURL)  
+    lTwo <- processCategories(xmltreeLog, vRegions[r], vMasterURL)  
+    dfInfo <- lTwo$dfInfo
+    vMasterURL <- lTwo$vMasterURL
     xmltreeLog$closeTag()
   }
+  ##############################################################
+  ### Save Master List of ALL URLs
+  ##############################################################
+  strCSVFullFileNa <- createLocalCSVFileNa("AllURLs", blnTimeStampI=TRUE, blnLaptop=TRUE)
+  cat("\n", "*** vMasterURL final ***", length(vMasterURL),  sep=" ")
+  write.csv(vMasterURL, strCSVFullFileNa, row.names=TRUE) 
   
   ##############################################################
   ### Close and save XML Log
   ##############################################################
   closeXMLTree(xmltreeLog)
   # strPath <- "C:/Users/p622403/Documents/Work/R/BBB/"
-  saveXML(xmltreeLog, file=CreateLocalXMLFileNa())
+  saveXML(xmltreeLog, file=CreateLocalXMLFileNa(blnLaptop))
   print("*** processRegions - Complete ***")
 }
 ############################################################################
@@ -1162,12 +940,14 @@ flowFiles   <- function() {
   strBasePath <- "C:/Users/p622403/Documents/Work/R/BBB/"
   strTransferPath <- paste(strBasePath, "Transfer/", sep="")
   strDetailsPath <- paste(strBasePath, "Details/", sep="")
-  strBaseFileBaseNa <- "boston_sidingcontractors_page7_2015_07_23_183228"
+  strBaseFileBaseNa <- "bostonroofingcontractors_2015_08_11_120749"
   strBaseFileNa <- paste(strBaseFileBaseNa, ".csv", sep="")
   vBaseFullFileNa <- c(strDetailsPath, strBaseFileNa)
   strBaseFullFileNa <- paste(vBaseFullFileNa, collapse="")
+  print("strBaseFullFileNa")
+  print(strBaseFullFileNa)
   strFullTableName <- "prhbbb.bbtrv100_bbb_review"
-  strSeqN <- 100 
+  strSeqN <- 110 
   strFlowPrefix <- "BBB"
   # createSQLFileDrop(strPath, strBaseFileNa, strFullTableName, strSeqN) 
   write(createDropSQLFileContent(strFullTableName)  , createDropSQLFileNa(strTransferPath, strFlowPrefix,  strFullTableName, strSeqN, strBaseFileBaseNa))
@@ -1177,22 +957,26 @@ flowFiles   <- function() {
   ### Create data.frame from this .csv file
   ###################################################################
   # dfIn <-  ReadTextFileIntoDataFrame(strBaseFullFileNa, 0 )
-  dfIn <- read.csv(strBaseFullFileNa, header=TRUE, stringsAsFactors = FALSE, sep=",", na.strings = c("NA", "N/A"), blank.lines.skip=TRUE, skip = 0)
-  print("*** dfIn  *** ")
+  dfIn <- read.csv(strBaseFullFileNa, header=FALSE, stringsAsFactors = FALSE, sep=",", na.strings = c("NA", "N/A"), blank.lines.skip=TRUE, skip = 0)
+  print("*** flowFiles dfIn  *** ")
   print(nrow(dfIn))
   print(ncol(dfIn))
   ### Column Names For Upload into Aster
   vColNames1 <- c("IssueAdvSales", "IssueBilling","IssueDelivery","IssueWarranty","IssueProductService","ClosedComplaintTotal","ReviewPositive","ReviewNegative","ReviewNeutral","ReviewTotal")
   vColNames2 <- c("BBBRating", "LegalEnttyNa", "Street","City","State","Zip","Phone","Fax","Website","Longitude","Latitude")
   vColNames3 <- c("BusnStartDate", "naics","LicenseNumber")
+  vColNames3A <- c("BBBCategories")
   vColNames4 <- c("BBBReviewURL", "BBBRegion","BBBCategory","BBBPage")
-  vColNames <- c(vColNames1, vColNames2, vColNames3, vColNames4)
+  vColNames5 <- c("item")
+  vColNames <- c(vColNames1, vColNames2, vColNames3, vColNames3A, vColNames4, vColNames5)
   colnames(dfIn) <- tolower(vColNames)
   
   #######################################################################################################################
   ### Using data.frame create sql file for CREATE TABLE
   #######################################################################################################################
   strCreateDDLFullFileName <- createCreateSQLFileNa(strTransferPath, strBaseFileBaseNa, strFlowPrefix, strSeqN)
+  print("xxx flowFiles dfIn xxxx")
+  print(dfIn)
   strFirstColumnName <- DDLFromDataFrame(dfIn, strCreateDDLFullFileName, strFullTableName)  
   # write(strCreateDDLFullFileName, DDLFromDataFrame(dfIn, strBaseFullFileNa, strFullTableName)   )
   # write(paste("strFirstColumnName",strFirstColumnName) , strLogFileNa, append=TRUE)
@@ -1213,17 +997,17 @@ createLoadFiles   <- function() {
   strBasePathSQL <- "//wtors003/isg-secure/ISGBIG~1/2013HA~1/POC-TE~1/SQL/BBB/"
   strFlowPrefix <- "BBB"
   strFullTableName <- "prhbbb.bbtrv100_bbb_review"
-#   strTransferPath <- paste(strBasePath, "Transfer/", sep="")
-#   strDetailsPath <- paste(strBasePath, "Details/", sep="")
-  intSeqN <- 900L
+  #   strTransferPath <- paste(strBasePath, "Transfer/", sep="")
+  #   strDetailsPath <- paste(strBasePath, "Details/", sep="")
+  intSeqN <- 1005L
   vFileList <- listFullFilesInDirectory(strBasePathData, "*.csv")
   for (f in 1:length(vFileList)) {
     strBaseFileNa <- basename(as.character(vFileList[f]))
     strBaseFileBaseNa <- sub("^([^.]*).*", "\\1", strBaseFileNa)
-#     print(f)
-#     print(vFileList[f])
-#     print(strBaseFileNa)
-#     print(strBaseFileBaseNa)
+    #     print(f)
+    #     print(vFileList[f])
+    #     print(strBaseFileNa)
+    #     print(strBaseFileBaseNa)
     intSeqN <- intSeqN + 5 ; strSeqN <- formatC(intSeqN, width=4, flag="0")
     strCreatenClusterLoadFullFileName <- createnClusterLoadSQLFileNa(strBasePathSQL, strBaseFileBaseNa, strFlowPrefix, strSeqN)
     # print(strCreatenClusterLoadFullFileName)
@@ -1282,5 +1066,19 @@ testVectorMatrixDataFrame    <- function() {
   print(str(dfClasses))
   print(dfClasses)
   lapply(dfClasses, class)
-  
 }
+############################################################################
+### test2VectorElimination()
+############################################################################
+test2VectorElimination    <- function() {
+  vMaster <- c("A", "B", "C", "D")
+  vNewOne <- c("Q", "B", "E", "D","G")
+  vNewOne <- vNewOne[!vNewOne %in% vMaster]
+  print (vNewOne)
+  for(strURL in vNewOne) {
+    print(strURL)
+  }
+  strCSVFullFileNa <- createLocalCSVFileNa("VectorTest", blnTimeStampI=TRUE, blnLaptop=TRUE)
+  write.table(vNewOne, strCSVFullFileNa, row.names=FALSE) 
+}
+
