@@ -25,7 +25,6 @@ leukemiaPlot <- function() {
 ###   readOutcomeData
 ############################################################################
 readOutcomeData <- function() {
-  SetWDToLocal()
   ### All columns as character
   dfOutcome <- read.csv("outcome-of-care-measures.csv", colClasses = "character")
   return(dfOutcome)
@@ -83,7 +82,8 @@ best <- function(state, outcome) {
     stop('invalid outcome')
   }
   strFullColumnName <- fullColumnName(outcome)
-  
+  print("*** strFullColumnName ***")
+  print(strFullColumnName)
   ########################################################################################
   ########################################################################################
   ########################################################################################
@@ -95,6 +95,7 @@ best <- function(state, outcome) {
   print(nrow(dfState))
   print(colnames(dfState))
   print(head(dfState))
+  
   
   dfOrder <- sortByOutcome(dfState, strFullColumnName)
   print("*** dfOrder ***")
