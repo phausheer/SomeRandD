@@ -5,7 +5,8 @@
 bestInitialize <- function() {
   if (!require(dplyr)) install.packages('dplyr')
   library(dplyr)
-  setwd("C:/Users/p622403/Documents/Work/R")
+#   setwd("C:/Users/p622403/Documents/Work/R")
+  setwd("C:/Users/p622403/Documents/Work/GitRepos/SomeRandD")
   #   require("XML")
   #   install.packages("XML")  
 }
@@ -199,24 +200,37 @@ sortByOutcome <- function(dfState, outcome) {
 ### splitByState
 ########################################################################################
 splitByState <- function() {
+  bestInitialize()
   dfOutcome <- readOutcomeData()
-  df3 <- create3colDataFrame(dfOutcome)
+  strOutcome <- "heart attack"
+  df3 <- create3colDataFrame(dfOutcome, strOutcome)
   # factorStates <- as.factor(getUniqueStates())
-  g <- df3$State
-  lstStates <- split(df3, g)
-  print("***  lstStates ***")
-  print(class(lstStates))
-  print(length(lstStates))
-  print(str(lstStates[30]))
+  vcStates <- df3$State
+  print("***  vcStates ***")
+  print(class(vcStates))
+  print(length(vcStates))
   
-  lstNDOnly <- df3[df3$State == 'ND',]
-  # ndList <- subset(lstStates, State == "ND")
-  print("***  lstNDOnly ***")
-  print(class(lstNDOnly))
-  print(length(lstNDOnly))
-  print(str(lstNDOnly))
-  print(lstNDOnly)
+  lstStateGroups <- split(df3, vcStates)
+  print("***  lstStateGroups ***")
+  print(class(lstStateGroups))
+#   print(str(lstStates))
+  print(length(lstStateGroups))
+print(names(lstStateGroups))
+  #   print(str(lstStates[30]))
+
   
+  #######################################################################
+  ### Subset by Value
+  ### the Dataframe for ONLY North Dakata
+  ### This works 2015/08/24
+  #######################################################################
+#   lstNDOnly <- df3[df3$State == 'ND',]
+#   # ndList <- subset(lstStates, State == "ND")
+#   print("***  lstNDOnly ***")
+#   #   print(lstNDOnly)
+#   print(class(lstNDOnly))
+#   print(length(lstNDOnly))
+#   print(str(lstNDOnly))
 }
 ########################################################################################
 ### testBest 
