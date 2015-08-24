@@ -1,12 +1,13 @@
 #########################################################################
 ### hospital.R
-### 2015/08/24 
+### 2015/08/24 b
 ############################################################################
 bestInitialize <- function() {
   if (!require(dplyr)) install.packages('dplyr')
   library(dplyr)
 #   setwd("C:/Users/p622403/Documents/Work/R")
-  setwd("C:/Users/p622403/Documents/Work/GitRepos/SomeRandD")
+  # setwd("C:/Users/p622403/Documents/Work/GitRepos/SomeRandD")
+  setwd("C:/Users/p622403/Documents/Work/GitRepos/SomeRandD/SomeRandD")
   #   require("XML")
   #   install.packages("XML")  
 }
@@ -213,24 +214,30 @@ splitByState <- function() {
   lstStateGroups <- split(df3, vcStates)
   print("***  lstStateGroups ***")
   print(class(lstStateGroups))
-#   print(str(lstStates))
+  #   print(str(lstStates))
   print(length(lstStateGroups))
-print(names(lstStateGroups))
+  print(names(lstStateGroups))
   #   print(str(lstStates[30]))
-
+  ### the art of R programming section 4.2.1
+  dfNDOnly <- lstStateGroups[["ND"]]
+  print("***  dfNDOnly ***")
+  print(class(dfNDOnly))
+  print(dfNDOnly)
+  
+  
   
   #######################################################################
   ### Subset by Value
   ### the Dataframe for ONLY North Dakata
   ### This works 2015/08/24
   #######################################################################
-#   lstNDOnly <- df3[df3$State == 'ND',]
-#   # ndList <- subset(lstStates, State == "ND")
-#   print("***  lstNDOnly ***")
-#   #   print(lstNDOnly)
-#   print(class(lstNDOnly))
-#   print(length(lstNDOnly))
-#   print(str(lstNDOnly))
+  #   lstNDOnly <- df3[df3$State == 'ND',]
+  #   # ndList <- subset(lstStates, State == "ND")
+  #   print("***  lstNDOnly ***")
+  #   #   print(lstNDOnly)
+  #   print(class(lstNDOnly))
+  #   print(length(lstNDOnly))
+  #   print(str(lstNDOnly))
 }
 ########################################################################################
 ### testBest 
