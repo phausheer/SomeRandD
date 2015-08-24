@@ -218,7 +218,10 @@ splitByState <- function() {
   print(length(lstStateGroups))
   print(names(lstStateGroups))
   #   print(str(lstStates[30]))
+  
+  #######################################################################
   ### the art of R programming section 4.2.1
+  #######################################################################
   dfNDOnly <- lstStateGroups[["ND"]]
   print("***  dfNDOnly ***")
   print(class(dfNDOnly))
