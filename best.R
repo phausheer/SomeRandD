@@ -84,27 +84,28 @@ best <- function(state, outcome) {
     stop('invalid outcome')
   }
   strFullColumnName <- fullColumnName(outcome)
-  print("*** strFullColumnName ***")
-  print(strFullColumnName)
+#   print("*** strFullColumnName ***")
+#   print(strFullColumnName)
   ########################################################################################
   ########################################################################################
   ########################################################################################
   df3 <- create3colDataFrame(dfOutcome, outcome)
   dfState <- filterByState(df3, state)
-  print("*** dfState ***")
-  print(state)
-  print(class(dfState))
-  print(nrow(dfState))
-  print(colnames(dfState))
-  print(head(dfState))
+#   print("*** dfState ***")
+#   print(state)
+#   print(class(dfState))
+#   print(nrow(dfState))
+#   print(colnames(dfState))
+#   print(head(dfState))
   
   
   dfOrder <- sortByOutcome(dfState, strFullColumnName)
-  print("*** dfOrder ***")
-  print(class(dfOrder))
-  print(nrow(dfOrder))
-  print(colnames(dfOrder))
-  print(head(dfOrder))
+#   print("*** dfOrder ***")
+#   print(class(dfOrder))
+#   print(nrow(dfOrder))
+#   print(colnames(dfOrder))
+#   print(head(dfOrder))
+  return(dfOrder$Hospital.Name[1])
   ########################################################################################
   ## Return hospital name in that state with lowest 30-day death
   ### 30 day mortality rates from HEART ATTACK = Column 11
@@ -183,7 +184,7 @@ fullColumnName <- function(strColAbbr) {
       "Hospital.30.Day.Death..Mortality..Rates.from.Pneumonia"
     } else{   {
       if (strColAbbr == "heart failure") {
-        "Hospital.30.Day.Death..Mortality..Rates.from.Heart.Failur"
+        "Hospital.30.Day.Death..Mortality..Rates.from.Heart.Failure"
       } else {
         warning("invalid outcome")
       }
@@ -194,7 +195,8 @@ fullColumnName <- function(strColAbbr) {
 }
 ### http://stackoverflow.com/questions/1296646/how-to-sort-a-dataframe-by-columns
 sortByOutcome <- function(dfState, outcome) {
-    dfOrder <- dfState[order(dfState[[outcome]], decreasing=TRUE, na.last=TRUE), ] 
+  dfState[, 3] <- as.numeric(dfState[, 3])
+    dfOrder <- dfState[order(dfState[[outcome]], decreasing=FALSE, na.last=TRUE), ] 
   return(dfOrder)
 }
 ########################################################################################
@@ -246,16 +248,44 @@ splitByState <- function() {
 ### testBest 
 ########################################################################################
 testBest <- function() {
-  # best ("xx", "heart attack") 
-  # best ("TX", "xxxxxx") 
-  # debug(sortByOutcome)
-  best("TX", "pneumonia")
+  #   print("*** strSBInvalidState ***")
+  #   strSBInvalidState <- best ("xx", "heart attack")
   
-#   dfOutcome <- readOutcomeData()
-#   df3 <- create3colDataFrame(dfOutcome)
-#   dfTX <- filterByState(df3, "ND")
-#   print("***  dfTX ***")
-#   print(class(dfTX))
-#   print(length(dfTX))
-#   print(str(dfTX))
+  #   print("*** strSBInvalidOutcome ***")
+  #   strSBInvalidOutcome <- best ("TX", "xxxxxx") 
+  
+  print("*** strSBCypress ***")
+  strSBCypress <- best("TX", "heart attack")
+  print(strSBCypress)
+  
+  print("*** strSBFortDuncan ***")
+  strSBFortDuncan  <- best("TX", "heart failure")
+  print(strSBFortDuncan)
+
+  print("*** strSBJohnsHopkins ***")
+  strSBJohnsHopkins  <- best("MD", "heart attack")
+  print(strSBJohnsHopkins)
+  
+  print("*** strSBGreaterBaltimore ***")
+  strSBGreaterBaltimore  <- best("MD", "pneumonia")
+  print(strSBGreaterBaltimore)
+  #   dfOutcome <- readOutcomeData()
+  #   df3 <- create3colDataFrame(dfOutcome)
+  #   dfTX <- filterByState(df3, "ND")
+  #   print("***  dfTX ***")
+  #   print(class(dfTX))
+  #   print(length(dfTX))
+  #   print(str(dfTX))
+}
+########################################################################################
+### prepSubmit
+########################################################################################
+prepSubmit <- function() {
+  source("http://d396qusza40orc.cloudfront.net/rprog%2Fscripts%2Fsubmitscript3.R")
+}
+########################################################################################
+### gradeBest
+########################################################################################
+gradeBest <- function() {
+  submit()
 }
