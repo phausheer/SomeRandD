@@ -1,3 +1,6 @@
 http://rogerdudler.github.io/git-guide/
 ***
 http://www.codeproject.com/Articles/457305/Basic-Git-Command-Line-Reference-for-Windows-Users
+***
+# R to HTML and PDF if i use PanDoc
+http://rprogramming.net/create-html-or-pdf-files-with-r-knitr-miktex-and-pandoc/
